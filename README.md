@@ -163,12 +163,176 @@ O APP deve ser algo como na figura:
 <img src="L.jpeg" width="40%">
 <br />
 <br />
+# Parte 2: Criando um banco de dados
+Instruções de manipulação básica de imagens, para criação de um banco para treinamento da rede.
 
-# Parte 2: Artistic style transfer
+## Instalação
+<br/>
+Ative novamente o diretórtio, na pasta miniconda/bin digite:
+
+```markdown
+source activate tensorflowEnv
+```
+
+- Crie um diretorio para salvar suas imagens
+- Pelo terminal do ambiente acesse esse diretório
+- Ainda no terminal digite:
+```markdown
+jupyter notebook
+```
+O Jupyter irá gerar um link, que você deve copiar e colar dentro do navegado. <br />
+Já dentro do navegador, no canto direito de da página selecione:
+New -> terminal
+<br />
+<img src="img001.png" width="100%">
+<br />
+
+
+No terminal digite:
+```markdown
+bash
+```
+Então iremos instalar o OpenCv ( que é uma biblioteca de manipulação de imagens), digite:
+```markdown
+conda install -c conda-forge opencv
+```
+
+Ao finalizar a instalação volte para a página principal, e no lado direito selecione:
+new-> python 
+<br />
+<img src="img001.png" width="100%">
+<br />
+
+Uma página com interação no python irá abrir (este é o notebook).
+- O primeiro passo é importar a bibliotecas que iremos precisar.
+
+```markdown
+import  cv2
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+```
+
+- Em seguida abrir a imagem para manipula-la
+
+```markdown
+img=mpimg.imread('ensaiosbumbas.jpg')
+plt.imshow(img)
+```
+<br />
+<img src="ensaiosbumbas.jpg" width="70%">
+<br /> 
+
+## Redimensionando a imagem
+
+Em alguns casos uma imagem muito grande é um problema para o aprendizado da rede. E nesse caso se faz necessário redimensionar a imagem.
+
+- Para abrir a imagem com o OpenCv e visualizar as dimensões basta digitar o código abaixo:
+```markdown
+image = cv2.imread('ensaiosbumbas.jpg')
+image.shape
+```
+- Para abrir a imagem com o OpenCv e visualizar o as dimensões da imagem basta digitar o código abaixo:
+```markdown
+image = cv2.imread('ensaiosbumbas.jpg')
+image.shape
+```
+Antes de redimensionar uma imagem precisamos levar em consideração a proporção da imagem, assim não iremos alterar o formato
+original da imagem.
+<br />
+No caso abaixo, estamos colocando a imagem para 100px de largura, mas para isso precisamos primeiro calcular o ratio da imagem. A proporção entre a altura e a largura. 
+<br />
+r é igual 100px / pela altura
+<br />
+A dimensão da imagem final ficará 100px de largura e altura vezes o 'r' encontrado.
+
+```markdown
+r = 100.0 / image.shape[1]
+dim = (100, int(image.shape[0] * r))
+```
+Com o comando abaixo, executamos de fato a redimensão da imagem, os argumentos passados são: a imagem, nova dimensão e o algoritmo a ser utilizado para redimencionar a imagem.
+
+```markdown
+resized = cv2.resize(image, dim, interpolation = cv2.INTER_AREA)
+cv2.imwrite("resized.jpg", resized)
+```
+Para vizualizar as modificações digite:
+
+```markdown
+mimg=mpimg.imread('resized.jpg')
+plt.imshow(mimg)
+```
+
+<br />
+<img src="resized.jpg" width="70%">
+<br />
+
+## Rotacionado a imagem
+
+Outro passo importante na criação de um banco de imagens é que o classificador deve ser capaz de reconhecer seu objeto por exemplo de todos os angulos. Então montar uma base de dados com imagens rotacionadas pode ajudar na classificação.
+
+Salve as dimensões da imagem em um variável, e calcule o centro da imagem, simplesmente dividindo altura e largura por 2. 
+
+```markdown
+(h, w) = image.shape[:2]
+center = (w / 2, h / 2)
+```
+"getRotationMatrix"  o primeiro argumento é o centro da image que computamos. Se quisessemos que a imagem rotacionasse sobre algum ponto arbritrário o esse ponto seria inserido aqui.  O segundo argumeto é o ângulo de rotação (em graus). E por último o fator escalar. Neste caso 1.0 mantém a imagem no tamanho original, se quisessemos diminuir a imagem podemos colocar 0.5 ou para aumentar 2.0. Agora insira o código abaixo:
+
+```markdown
+M = cv2.getRotationMatrix2D(center, 180, 1.0)
+rotated = cv2.warpAffine(image, M, (w, h))
+cv2.imwrite("rotated.jpg", rotated)
+```
+Observe que o a rotaçao só ocorre quando chamamos a função warpAffine, que recebe a imagem, os parêmetros de rotação, e as dimensões da imagem.
+
+<br />
+Para visualizar a mudança digite: 
+
+```markdown
+mimg=mpimg.imread('rotated.jpg')
+plt.imshow(mimg)
+```
+
+<br />
+<img src="rotated.jpg" width="70%">
+<br />
+
+## Selecionando a região de interesse
+
+É comum que o todo de uma imagem não represente o único objeto que queremos classificar. Por isso, "recortar" a região de interesse é um procedimento comum no pré-processamento de imagens.
+
+Para isso digite o comando abaixo, lembrando que você deve indicar o local de "recorte" da imagem.
+```markdown
+cropped = image[X_inicio:X_fim, Y_inicio:Y_fim]
+cv2.imwrite("cropped1.jpg", cropped)
+```
+<br />
+Para visualizar o crop digite: 
+
+```markdown
+mimg=mpimg.imread('cropped1.jpg')
+plt.imshow(mimg)
+```
+
+<br />
+<img src="cropped.jpg" width="50%">
+<br />
+<img src="cropped2.jpg" width="50%">
+<br />
+
+
+# Parte 3: Artistic style transfer
 
 Este projeto é uma implementação do artigo [A Learned Representation For Artistic Style](https://arxiv.org/abs/1610.07629).
 
 ## O APP
+<br />
+<img src="L2.jpeg" width="40%">
+<br />
+
+- O primeiro botão, rotulado com um número (256 por padrão), controla o tamanho da imagem a ser exibida Números menores significam imagens menores, que serão mais rápidas de transformar, mas terão qualidade inferior. Por outro lado, as imagens maiores conterão mais detalhes, mas levarão mais tempo para serem transformadas.
+- O segundo botão salvará o quadro atual no seu dispositivo para você usar posteriormente.
+- As miniaturas representam os possíveis estilos que você pode usar para transformar o feed da câmera. Cada imagem é um controle deslizante e você pode combinar vários controles deslizantes que representarão as proporções de cada estilo que você deseja aplicar. Essas proporções, junto com o frame da câmera, representam as entradas na rede.
 
 ## Implementando
 Primeiro clone o repositorio:
@@ -182,7 +346,10 @@ Carregue o código no Android Studio: <br />
     3. Assim que terminar de importar o projeto, abra o arquivo **StylizeActivity**.
     
 O código original do TensorFlow que gerou esta rede está disponível [nesta página do GitHub](https://github.com/tensorflow/magenta). Antes de usá-lo em um ambiente com recursos restritos, como um aplicativo móvel, esse modelo foi exportado e transformado para usar tipos de dados menores e remover cálculos redundantes. O resultado final é o arquivo **stylize_quantized.pb** que será usado neste app.
-
+<br />
+A câmera fornece dados de imagem no espaço **YUV** (como é o mais amplamente suportado), mas a rede espera **RGB**. Para realizar essa conversão e para toda as outras transformações necessárias para as imagens é utilizada a biblioteca **ImageUtils**. Neste código também é bastante utilizada a classe **TensorFlowInferenceInterface**, que é uma interface para modelo de programação de baixo nível.
+<br />
+<br />
 Para adicionar as bibliotecas de inferência e suas dependências ao nosso projeto, precisamos adicionar a Biblioteca de inferências Android TensorFlow e a API Java, que está disponível no JCenter (em Arquivos, tensorflow-android)
 1. No Android Studio abra o build.gradle <br />
 2. Adicione o seguinte código ao arquivo:
@@ -248,4 +415,4 @@ private void renderDebug(final Canvas canvas) {
  // ... more provided code for rendering the text ...
 }
 ```
-
+No Android Studio, pressione o botão Executar e aguarde a construção do projeto.
